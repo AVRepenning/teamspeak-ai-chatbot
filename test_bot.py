@@ -9,8 +9,14 @@ import bot
 class BotTests(unittest.TestCase):
     def test_wake_word(self):
         self.assertEqual(bot.directed("Hey Bot, how's your day?"), "how's your day?")
+        self.assertEqual(bot.directed("Hey Jensen, how's your day?"), "how's your day?")
+        self.assertEqual(bot.directed("Hej Jensen, hvordan går det?"), "hvordan går det?")
+        self.assertEqual(bot.directed("Hey Jimmy, how's your day?"), "how's your day?")
+        self.assertEqual(bot.directed("Hej Jimmy, hvordan går det?"), "hvordan går det?")
         self.assertEqual(bot.directed('hey bot: How are you?'), 'How are you?')
         self.assertEqual(bot.directed('Hey - Bot! How are you?'), 'How are you?')
+        self.assertEqual(bot.directed('Hej - Jensen! Hvad laver du?'), 'Hvad laver du?')
+        self.assertEqual(bot.directed('Hej - Jimmy! Hvad laver du?'), 'Hvad laver du?')
         self.assertEqual(bot.directed('Bot, how are you?'), '')
         self.assertEqual(bot.directed("Hey Neuro, how's your day?"), '')
         self.assertEqual(bot.directed("Neuro, how's your day?"), '')

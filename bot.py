@@ -58,16 +58,16 @@ def find_device(name, direction):
     return matches[0][0]
 
 
-def transcribe(samples, model, vad_filter=True):
+def transcribe(samples, model, vad_filter=True, language='en'):
     speech = resample_poly(samples, STT_RATE, AUDIO_RATE).astype(np.float32)
-    segments, _ = model.transcribe(speech, language='en', vad_filter=vad_filter)
+    segments, _ = model.transcribe(speech, language=language, vad_filter=vad_filter)
     return ' '.join(x.text.strip() for x in segments).strip()
 
 
 def directed(text):
     text = text.strip()
-    # The current activation phrase is exactly "Hey Bot", not bare "Bot".
-    match = re.match(r'^hey[\s,\-]+bot\b(?!\s+sama)', text, re.IGNORECASE)
+    # Supports "Hey Jimmy", "Hej Jimmy", "Hey Jensen", "Hej Jensen", "Hey Bot", "Hej Bot"
+    match = re.match(r'^(?:hey|hej)[\s,\-]+(?:jimmy|jensen|bot)\b(?!\s+sama)', text, re.IGNORECASE)
     return text[match.end():].lstrip(' ,:!?') if match else ''
 
 

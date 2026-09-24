@@ -16,6 +16,10 @@ This document maintains an exact inventory of every file, directory, tool, drive
 | `test_bot.py` | Unit tests for bot logic. | Project Core |
 | `test_capture_clip.py` | Unit tests for audio capture. | Project Core |
 | `README.md` | Original project notes and requirements. | Project Core |
+| `autonomous_bot.py` | Full autonomous continuous voice bot pipeline. | Project Core |
+| `start_jimmy.bat` | One-click Windows batch launcher for Jimmy. | Project Core |
+| `avatar.png` | Bot profile picture. | Project Core |
+| `.env` | Local Gemini API configuration (never committed to git). | Private config |
 | `MASTER-PLAN.md` | Complete architectural specification and phase gate definitions. | Project Core |
 | `MASTER-PLAN-PROGRESS.md` | Execution log of actions, findings, tests, and progress. | Project Core |
 | `PROJECT-INVENTORY-AND-CLEANUP.md` | This exact inventory and cleanup guide. | Project Core |
@@ -37,6 +41,7 @@ This document maintains an exact inventory of every file, directory, tool, drive
 | :--- | :--- | :--- |
 | `C:\Users\arepe\AppData\Roaming\TeamSpeak_Bot\` | Temporary test profile directory created during TS6 instance test. | `Remove-Item -Recurse -Force "C:\Users\arepe\AppData\Roaming\TeamSpeak_Bot"` |
 | `C:\Users\arepe\AppData\Local\Temp\hermes_test_scratch\` | Temporary audio scratch directory used by unit tests. | `Remove-Item -Recurse -Force "C:\Users\arepe\AppData\Local\Temp\hermes_test_scratch"` |
+| `D:\AI\cache\` | Local AI model cache (faster-whisper weights). Kept off C: to save drive space. | `Remove-Item -Recurse -Force "D:\AI\cache"` |
 | `C:\Users\arepe\.gemini\antigravity\brain\0214d150-d514-4212-96fc-31dca160553c\` | Agent workspace scratch scripts, inspection logs, and session artifacts. | Managed automatically by Antigravity / can be wiped. |
 
 ### 2.3 System Software & Drivers (Windows Level)
@@ -62,6 +67,7 @@ Remove-Item -Path "C:\Users\arepe\Downloads\TeamSpeak3-Client-win64-3.6.2.exe" -
 Remove-Item -Recurse -Force -Path "C:\Users\arepe\AppData\Local\Programs\TeamSpeak3_Bot" -ErrorAction SilentlyContinue
 Remove-Item -Recurse -Force -Path "C:\Users\arepe\AppData\Roaming\TeamSpeak_Bot" -ErrorAction SilentlyContinue
 Remove-Item -Recurse -Force -Path "C:\Users\arepe\AppData\Local\Temp\hermes_test_scratch" -ErrorAction SilentlyContinue
+Remove-Item -Recurse -Force -Path "D:\AI\cache" -ErrorAction SilentlyContinue
 
 # 2. To remove the project virtual environment:
 # Remove-Item -Recurse -Force "C:\Users\arepe\Desktop\Teamspeak AI chatbot\.venv"
