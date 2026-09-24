@@ -90,8 +90,22 @@ def directed(text):
     return text[match.end():].lstrip(" ,:!?") if match else ""
 
 
+def clean_for_tts(text):
+    """Clean text for speech synthesis and console display."""
+    if not text:
+        return ""
+    # Remove thinking tags if present
+    text = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL)
+    # Remove markdown bold/italics/headers
+    text = re.sub(r"[*_#`~]", "", text)
+    # Remove emojis (surrogate pairs and emoji blocks)
+    text = re.sub(r"[\U00010000-\U0010ffff]", "", text)
+    text = re.sub(r"[\u2600-\u27bf]", "", text)
+    return re.sub(r"\s+", " ", text).strip()
+
+
 def ask_lm_studio(question, history, url=LM_STUDIO_URL):
-    """Query local LM Studio OpenAI-compatible endpoint without system prompt."""
+    """Query local LM Studio OpenAI-compatible endpoint."""
     messages = []
     for h in history[-6:]:
         messages.append({"role": h["role"], "content": h["content"]})
@@ -100,13 +114,24 @@ def ask_lm_studio(question, history, url=LM_STUDIO_URL):
     payload = {
         "messages": messages,
         "temperature": 0.7,
-        "max_tokens": 250,
+        "max_tokens": 800,
         "stream": False,
     }
     r = requests.post(f"{url.rstrip('/')}/chat/completions", json=payload, timeout=60)
     r.raise_for_status()
     data = r.json()
-    answer = data["choices"][0]["message"]["content"].strip()
+    msg = data["choices"][0]["message"]
+    raw_answer = msg.get("content") or ""
+    
+    # Clean answer for speech
+    answer = clean_for_tts(raw_answer)
+    if not answer and msg.get("reasoning_content"):
+        # Model produced only reasoning
+        answer = clean_for_tts(msg["reasoning_content"])
+    
+    if not answer:
+        answer = "Ja, jeg lytter! Hvad kan jeg hjælpe dig med?"
+
     history.extend([{"role": "user", "content": question}, {"role": "assistant", "content": answer}])
     return answer
 
@@ -122,14 +147,15 @@ def ask_gemini(question, history, key, model="gemini-2.5-flash"):
     payload = {
         "contents": contents,
         "generationConfig": {
-            "maxOutputTokens": 300,
+            "maxOutputTokens": 400,
             "thinkingConfig": {"thinkingBudget": 0},
             "temperature": 0.7,
         },
     }
     r = requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=15)
     r.raise_for_status()
-    answer = r.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
+    raw_answer = r.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
+    answer = clean_for_tts(raw_answer)
     history.extend([{"role": "user", "content": question}, {"role": "assistant", "content": answer}])
     return answer
 
@@ -176,6 +202,8 @@ async def synthesize_speech(text, voice="da-DK-JeppeNeural"):
 
 
 def main():
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
     print("=" * 60)
     print("  JIMMY - AUTONOMOUS TEAMSPEAK VOICE BOT (LOCAL AI READY)")
     print("=" * 60)
