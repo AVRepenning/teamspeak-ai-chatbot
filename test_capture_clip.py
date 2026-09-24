@@ -10,7 +10,8 @@ from scipy.io import wavfile
 
 import capture_clip
 
-SCRATCH = Path(os.environ['LOCALAPPDATA']) / 'hermes' / 'cache' / 'scratch'
+SCRATCH = Path(tempfile.gettempdir()) / 'hermes_test_scratch'
+SCRATCH.mkdir(parents=True, exist_ok=True)
 
 
 class CaptureClipTests(unittest.TestCase):

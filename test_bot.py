@@ -105,7 +105,14 @@ class BotTests(unittest.TestCase):
         self.assertEqual(result, '')
         ask.assert_not_called()
 
-    def test_safe_wasapi_device_names(self):
+    @patch('bot.sd.query_hostapis', return_value={'name': 'Windows WASAPI'})
+    @patch('bot.sd.query_devices')
+    def test_safe_wasapi_device_names(self, mock_devices, mock_apis):
+        devs = [
+            {'name': 'Voicemeeter Out B1 (VB-Audio)', 'hostapi': 0, 'max_input_channels': 2, 'max_output_channels': 0},
+            {'name': 'CABLE Input (VB-Audio)', 'hostapi': 0, 'max_input_channels': 0, 'max_output_channels': 2},
+        ]
+        mock_devices.side_effect = lambda idx=None: devs if idx is None else devs[idx]
         source = bot.find_device('Voicemeeter Out B1', 'input')
         sink = bot.find_device('CABLE Input', 'output')
         bot.validate_devices(source, sink)
