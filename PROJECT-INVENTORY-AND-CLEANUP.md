@@ -35,7 +35,6 @@ This document maintains an exact inventory of every file, directory, tool, drive
 ### 2.2 Extracted Applications & Temporary Folders
 | Path | Description | How to Delete |
 | :--- | :--- | :--- |
-| `C:\Users\arepe\AppData\Local\Programs\TeamSpeak3_Bot\` | Standalone portable extraction of TeamSpeak 3 for isolated bot client. | `Remove-Item -Recurse -Force "C:\Users\arepe\AppData\Local\Programs\TeamSpeak3_Bot"` |
 | `C:\Users\arepe\AppData\Roaming\TeamSpeak_Bot\` | Temporary test profile directory created during TS6 instance test. | `Remove-Item -Recurse -Force "C:\Users\arepe\AppData\Roaming\TeamSpeak_Bot"` |
 | `C:\Users\arepe\AppData\Local\Temp\hermes_test_scratch\` | Temporary audio scratch directory used by unit tests. | `Remove-Item -Recurse -Force "C:\Users\arepe\AppData\Local\Temp\hermes_test_scratch"` |
 | `C:\Users\arepe\.gemini\antigravity\brain\0214d150-d514-4212-96fc-31dca160553c\` | Agent workspace scratch scripts, inspection logs, and session artifacts. | Managed automatically by Antigravity / can be wiped. |
@@ -43,6 +42,7 @@ This document maintains an exact inventory of every file, directory, tool, drive
 ### 2.3 System Software & Drivers (Windows Level)
 | Software / Driver | Location / Component | How to Uninstall |
 | :--- | :--- | :--- |
+| **TeamSpeak 3 Client** | `C:\Users\arepe\AppData\Local\Programs\TeamSpeak 3 Client\` | Run uninstaller: `"C:\Users\arepe\AppData\Local\Programs\TeamSpeak 3 Client\uninstall.exe"` or via Windows Settings -> Installed Apps. |
 | **VB-Audio Voicemeeter** | `C:\Program Files (x86)\VB\Voicemeeter\` | Open **Windows Settings -> Apps -> Installed Apps**, search for `Voicemeeter`, click **Uninstall** (or run `C:\Program Files (x86)\VB\Voicemeeter\voicemeetersetup.exe -u`). |
 | **VB-Audio Virtual Cable (VB-CABLE)** | Kernel audio endpoints: `CABLE Input`, `CABLE Output` | Run `C:\Users\arepe\Downloads\VBCABLE_Driver_Pack43\VBCABLE_Setup_x64.exe` as Admin and click **"Remove Driver"**, or uninstall from **Windows Settings -> Installed Apps**. |
 | **TeamSpeak 6 Client** | `C:\Users\arepe\AppData\Local\Programs\TeamSpeak\` | Your primary existing client. *Do not delete unless you no longer want TeamSpeak on this PC.* |
