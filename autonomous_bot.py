@@ -160,8 +160,61 @@ def ask_gemini(question, history, key, model="gemini-2.5-flash"):
     return answer
 
 
+def ask_openai(question, history, key, model="gpt-4o-mini"):
+    """Query OpenAI chat completions."""
+    messages = []
+    for h in history[-6:]:
+        messages.append({"role": h["role"], "content": h["content"]})
+    messages.append({"role": "user", "content": question})
+
+    headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
+    payload = {
+        "model": model,
+        "messages": messages,
+        "max_tokens": 300,
+        "temperature": 0.7,
+    }
+    r = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload, timeout=15)
+    r.raise_for_status()
+    raw = r.json()["choices"][0]["message"]["content"].strip()
+    answer = clean_for_tts(raw)
+    history.extend([{"role": "user", "content": question}, {"role": "assistant", "content": answer}])
+    return answer
+
+
+def synthesize_openai_tts(text, key, voice="fable"):
+    """Synthesize speech using OpenAI TTS API with requested voice."""
+    headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
+    payload = {
+        "model": "tts-1",
+        "voice": voice,
+        "input": text,
+        "response_format": "mp3",
+    }
+    r = requests.post("https://api.openai.com/v1/audio/speech", headers=headers, json=payload, timeout=15)
+    r.raise_for_status()
+    import io
+    container = av.open(io.BytesIO(r.content), format="mp3")
+    chunks = []
+    resampler = av.AudioResampler(format="flt", layout="mono", rate=AUDIO_RATE)
+    for frame in container.decode(audio=0):
+        for converted in resampler.resample(frame):
+            chunks.append(converted.to_ndarray().reshape(-1))
+    for converted in resampler.resample(None):
+        chunks.append(converted.to_ndarray().reshape(-1))
+    return np.concatenate(chunks).astype(np.float32) if chunks else np.array([], dtype=np.float32)
+
+
 def ask_ai(question, history):
-    """Try local LM Studio first, fall back to Gemini if LM Studio is offline."""
+    """Try OpenAI first if configured, fall back to local LM Studio or Gemini."""
+    openai_key = os.getenv("OPENAI_API_KEY")
+    if openai_key:
+        try:
+            ans = ask_openai(question, history, openai_key)
+            return ans, "OpenAI (GPT-4o-mini)"
+        except Exception as e:
+            print(f"[OpenAI notice ({e}) - trying local LM Studio]")
+
     try:
         ans = ask_lm_studio(question, history)
         return ans, "LM Studio (Local)"
@@ -170,14 +223,22 @@ def ask_ai(question, history):
         if gemini_key:
             try:
                 ans = ask_gemini(question, history, gemini_key)
-                return ans, "Gemini 2.5 Flash (Fallback)"
+                return ans, "Gemini 2.5 Flash"
             except Exception as gem_err:
-                raise RuntimeError(f"Both LM Studio ({lm_err}) and Gemini ({gem_err}) failed.")
+                raise RuntimeError(f"All backends failed: {lm_err}, {gem_err}")
         raise RuntimeError(f"LM Studio is not reachable at {LM_STUDIO_URL} ({lm_err})")
 
 
 async def synthesize_speech(text, voice="da-DK-JeppeNeural"):
-    """Convert Danish text to audio frames via edge-tts."""
+    """Convert Danish text to audio frames via OpenAI TTS (fable) or local fallback."""
+    openai_key = os.getenv("OPENAI_API_KEY")
+    openai_voice = os.getenv("OPENAI_VOICE", "fable")
+    if openai_key:
+        try:
+            return synthesize_openai_tts(text, openai_key, openai_voice)
+        except Exception as e:
+            print(f"[OpenAI TTS notice ({e}) - using free Danish voice]")
+
     comm = edge_tts.Communicate(text, voice)
     import tempfile
     with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as tmp:
