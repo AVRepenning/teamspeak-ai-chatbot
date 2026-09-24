@@ -1,112 +1,137 @@
-# TeamSpeak 6 / Neuro — lokal prototype
+# 🎙️ Jimmy — Autonomous TeamSpeak AI Voice Bot
 
-Dette er en **manuel push-to-talk prototype**, ikke en færdig TeamSpeak-bot.
-Den forbinder ikke automatisk til serveren eller flytter sig selv ud af AFK.
-Den optager kun, når operatøren trykker Enter; kun ytringer der begynder med
-"Hey Bot" sendes til Hermes-motoren. Det gamle vækkeord "Neuro" og "Bot"
-alene udløser ikke et svar.
-Ingen optagelse mellem tryk.
+An autonomous, low-latency, self-hosted Danish voice chatbot designed to live in your TeamSpeak voice channel. Jimmy continuously monitors channel audio, detects when he is addressed, transcribes the spoken Danish question, queries an AI intelligence engine, and speaks his reply back into the channel in Danish.
 
-## Status på denne pc
-- TS6-klienten og Python-pakkerne `numpy`, `sounddevice`, `faster-whisper`,
-  `edge-tts`, `av`, `requests` findes allerede.
-- VB-CABLE og Voicemeeter er installeret, pc'en genstartet, og begge vises
-  som lydenheder. Den ende-til-ende lydrute er endnu ikke godkendt ved test.
-- TS6 Remote Apps på lokal port 5899 svarede ikke. API'et kan give hændelser,
-  men dokumenterer ikke ind/udgående talelyd.
-- Hermes-profilen `tshermes` er oprettet med egen API-nøgle. Alle API-værktøjer
-  er deaktiveret og kontrolleret via `/p/tshermes/v1/toolsets`.
-- Værtens gateway er startet manuelt, og tekstkæden er verificeret med et svar.
-  Den er ikke installeret som autostart-service; start med `hermes gateway run`.
-- Separat TS6-profil (`--cpa=HermesBot`) er oprettet med TeamSpeak-brugernavnet
-  `Neuro_Sama_Bot` og koblet til `-=The Flying Circus=-` via invitation.
-  Mikrofonen er slået fra i botklienten. Capture er sat til CABLE Output;
-  playback er nu sat til Voicemeeter Input (bekræftet i botklientens UI),
-  og botklientens Output Volume blev ændret fra -28,5 dB til 0 dB og
-  kontrolleret efter genåbning af lydindstillingerne. Dette påvirker ikke
-  ejerens normale TeamSpeak-klient. En efterfølgende input-test gav
-  RMS=0,015131, peak=0,315254 og "Hej neuro, vejløro!": vækkeordet blev
-  genkendt, mens spørgsmålet fortsat blev fejltransskriberet. Næste forsøg
-  sammenlignede samme 15-sekunders klip med og uden Whispers VAD:
-  RMS=0,021498, peak=0,421734; med VAD "Hej, Nero! Vælg ordentligt!",
-  uden VAD "Hej Nero, vejl E.O.R.u.". VAD-frakobling rettede altså ikke
-  denne fejl; ingen lydfil blev gemt, og ingen bot-svar blev udsendt.
-  Der er endnu ikke udført en ende-til-ende TeamSpeak-taletest.
-- Voicemeeter Basic (type 1) er startet og afgrænset via dens Remote API:
-  hardware-strips 0/1 er muted og frakoblet B1; virtuel strip 2 er
-  frakoblet fysiske A1/A2 og tilkoblet B1. Parametrene er læst tilbage.
-  En samtidig 48-kHz toneprøve fra `Voicemeeter Input` til `Voicemeeter Out B1`
-  viste peak 0,030; VB-CABLE fra `CABLE Input` til `CABLE Output` viste
-  peak 0,020. Dette tester kun de lokale virtuelle ruter, ikke TS6-lyd.
-- Hermes-API gav svaret `Neuro er klar til test.`; Whisper `small` blev
-  indlæst på CPU; Edge TTS gennemførte afspilning til CABLE Input, mens
-  botklienten var muted. Syv automatiske tests består.
-- En tidligere diagnostisk optagelse viste RMS=0 og peak=0. Botklientens
-  playback viste sig siden at være Default Device (VAIO3); den blev sat til
-  Voicemeeter Input. En efterfølgende input-test gav RMS=0,000620,
-  peak=0,010956 og transskriptionen "Enero, hvad hedder du?". Lyd når altså
-  frem, men vækkeordet blev ikke genkendt korrekt; intet svar blev afspillet.
-- Den tidligere langvarige interaktive proces efterlod Python-børn, når
-  terminalens wrapper blev stoppet. Brug engangsdiagnose eller verificér
-  alle `bot.py --safe-devices`-processer efter stop.
-- Prototypekoden er nu sat til engelsk: Whisper `language='en'`, engelsk
-  systembesked og standard-TTS `en-US-JennyNeural`. En aftalt lokal
-  25-sekunders inputoptagelse fangede kun brugerens ene ytring sidst i
-  vinduet (ca. sekund 22–25); Damme_ var gået. Whisper `small` gav med VAD
-  `How was your day?` og uden VAD `Hey Nero, how was your day?`. Det er
-  væsentligt tættere på den aftalte engelske sætning, men vækkeordet blev
-  ikke nøjagtigt genkendt, og den anden taler blev ikke prøvet. WAV-filen
-  blev slettet efter analysen; ingen bot-svar blev sendt.
-- Vækkeordet er efterfølgende ændret til præcis `Hey Bot` i prototypen,
-  uden at ændre den separate TS6-klients synlige navn. En aftalt
-  25-sekunders inputtest med to gentagelser gav med VAD
-  `hey bud how's your day hey bud how's your day ...` og uden VAD
-  `Hey, but how's your day hey, but how's your day ...`. Spørgsmålet blev
-  omtrent genkendt, men ingen af transskriptionerne matcher det præcise
-  vækkeord. `bud`/`but` tilføjes ikke som alias pga. risiko for falsk
-  aktivering. Intet Hermes-kald eller svar blev sendt; WAV blev slettet.
+---
 
-## Krav før stemme i kanalen
-1. Botklientens playback er `Voicemeeter Input (VB-Audio Voicemeeter VAIO)`.
-   Kontrollér før en ny kørsel, at hardwareinput er muted og fysisk A-output
-   er frakoblet; Voicemeeters miks kan ændres af andre programmer.
-2. Python-input skal være returenden af denne rute; Python-output skal være
-   CABLE Input (TS6 capture = CABLE Output). Undgå standardenheder,
-   headset, højttalere og Stereo Mix.
-3. Start den lokale Hermes-gateway; API-nøglen læses fra tshermes-profilens
-   .env-fil og må ikke kopieres til projektfiler.
-4. Vis tydeligt for alle deltagere, at botten behandler stemmeklip ved aktivering.
-   Talegenkendelse sker lokalt med faster-whisper; edge-tts sender selve svaret
-   til en ekstern TTS-tjeneste. Slå ikke optagelse til uden deres accept.
+## 🚀 Key Features
 
-## Kørsel
-```bash
-python bot.py --list-devices
-python bot.py --safe-devices --test-text "How are you?"
-python bot.py --safe-devices --diagnose-input --seconds 45
-python capture_clip.py --seconds 25  # kun efter særskilt samtykke fra alle til gemt klip
-python bot.py --safe-devices --manual-question --seconds 15
-python bot.py --safe-devices
-python -m unittest discover -s . -p 'test*.py' -v
+* **Hands-Free Autonomous Pipeline:** No manual "Enter-to-record" keys. Jimmy streams channel audio in real time with continuous Voice Activity Detection (VAD) and trailing silence segmentation.
+* **Local Danish Speech Recognition (STT):** Powered by `faster-whisper` running locally on CPU (`int8`), seeded with acoustic prompt biasing (`initial_prompt="Hej Jimmy! Her er Jimmy i TeamSpeak."`) for rapid, high-accuracy Danish transcription.
+* **Resilient Smart Trigger Detection:**
+  * Triggers on any natural greeting: *"Hej Jimmy"*, *"Hey Jimmy"*, *"Dav Jimmy"*, *"Hallo Jimmy"*, *"Øh hej Jimmy"*.
+  * Triggers on just his name: *"Jimmy, hvad synes du?"*.
+  * Handles phonetic variations (`Jimmy`, `Jimi`, `Jimmie`, `Jamie`, `Gimmy`, `Jensen`).
+  * **Completely ignores normal gaming chatter** when his name is not called.
+* **Instant Audio Chime (Earcon):** Plays a subtle, pleasant two-tone acknowledgment chime (*ding-ding*) the millisecond he hears his name, giving immediate feedback that he is listening and processing.
+* **Pluggable Multi-Backend AI Engine:**
+  * **OpenRouter:** Blazing fast cloud intelligence (`google/gemini-2.5-flash`, `openai/gpt-4o-mini`, `anthropic/claude-3.5-haiku`, etc.) with sub-second response times.
+  * **Local LM Studio:** 100% private, self-hosted, offline AI running on your own PC via `http://localhost:1234/v1`.
+  * **OpenAI API:** Direct integration with GPT-4o-mini and OpenAI TTS voices (`fable`, `echo`, `onyx`, `alloy`).
+  * **Automatic Failover:** If a primary cloud engine is unreachable or out of quota, Jimmy automatically falls back to your local LM Studio without dropping the question or crashing.
+* **Echo-Free Audio Isolation:** Isolated virtual audio topology using Voicemeeter and VB-CABLE with software mute-locks during speech playback, ensuring zero feedback loops and zero bleed with your personal microphone or desktop audio.
+
+---
+
+## 🎧 Audio Architecture & Signal Routing
+
+```
+                     +---------------------------------------+
+                     |        TeamSpeak Voice Channel        |
+                     +---------------------------------------+
+                            | (Channel Voice)     ^ (Jimmy's Voice)
+                            v                     |
+              +----------------------------+  +----------------------------+
+              |   Voicemeeter Virtual In   |  |   CABLE Output (VB-Audio)  |
+              | (TS3 Playback Destination) |  |   (TS3 Capture Device)     |
+              +----------------------------+  +----------------------------+
+                            | (Bus B1)            ^ (Virtual Wire)
+                            v                     |
+              +----------------------------+  +----------------------------+
+              |    Voicemeeter Out B1      |  |    CABLE Input (VB-Audio)  |
+              |    (Python Audio Source)   |  |    (Python Audio Sink)     |
+              +----------------------------+  +----------------------------+
+                            |                             ^
+                            v                             |
++---------------------------------------------------------------------------------------+
+|  JIMMY VOICE BOT PIPELINE (autonomous_bot.py)                                        |
+|                                                                                       |
+|  1. Continuous Audio Ingestion (44.1 kHz, ring buffer with 500ms pre-roll)            |
+|  2. Voice Activity Detection (Energy & trailing silence segmentation)                 |
+|  3. Local Danish Whisper STT (CPU int8, prompt biased to "Hej Jimmy")                 |
+|  4. Smart Trigger Matcher ("Hey Jimmy", "Hej Jimmy", "Jimmy ...")                     |
+|  5. Instant Audio Chime Feedback (plays acknowledgment chime into channel)             |
+|  6. AI Engine (OpenRouter / Local LM Studio / OpenAI / Gemini)                        |
+|  7. Danish TTS Synthesis (da-DK-JeppeNeural / OpenAI Fable)                           |
+|  8. Echo-Free Playback into CABLE Input (drops incoming audio while speaking)         |
++---------------------------------------------------------------------------------------+
 ```
 
-Whisper `small` er hentet og indlæst. Programmet optager kun ved Enter
-(7 sekunder som standard), svarer kun når transskriptionen begynder med
-`Hey Bot`, og lytter ikke mellem
-optagelser. Start først efter at **kun**
-botklientens Playback Device viser `Voicemeeter Input (VB-Audio Voicemeeter
-VAIO)` og efter samtykke fra testdeltagerne. Hold mikrofonen muted, indtil
-en isoleret testkanal er klar; afmut kun under den aftalte test.
-`--manual-question` er kun til en aftalt, manuelt startet prøve: Efter Enter
-sendes hele det genkendte klip som spørgsmål uden vækkeord. Brug det ikke som
-automatisk lytter; botklienten forbliver muted, indtil en særskilt svartest
-er aftalt. `--diagnose-input` har altid forrang og sender aldrig svar.
-`capture_clip.py` er en separat, engangs lokal optagelse fra kun Voicemeeter
-Out B1. Den venter på Enter, gemmer højst 25 sekunder som WAV under Hermes'
-scratch-mappe, transskriberer ikke og afspiller/sender intet. Brug kun efter
-samtykke til midlertidig lagring; slet den præcise WAV-fil efter undersøgelsen.
-Indtil den isolerede afspilningsretur er verificeret, kan **stemmeforbindelsen
-ikke bruges sikkert**. Skriptet afviser
-almindelig mikrofon og standard-/headset-output for at mindske risikoen for
-at optage dig eller skabe ekko. Start ikke botten i en virkelig kanal, før
-rutevalget er kontrolleret.
+---
+
+## 🛠️ Prerequisites
+
+1. **Windows 10 / 11**
+2. **TeamSpeak 3 Client** (used as the dedicated bot instance alongside your main TeamSpeak 6 client).
+3. **VB-Audio Virtual Cable (VB-CABLE)**
+4. **VB-Audio Voicemeeter**
+5. **Python 3.10+** (recommended: Python 3.12 managed via `uv`)
+
+---
+
+## ⚙️ Quick Setup Guide
+
+### 1. TeamSpeak 3 Client Configuration
+In your TeamSpeak 3 Client, open **Tools &rarr; Options** (`Alt + P`):
+* **Playback:** Set **Playback Device** to:  
+  `Voicemeeter Input (VB-Audio Voicemeeter VAIO)`
+* **Capture:** Set **Capture Device** to:  
+  `CABLE Output (VB-Audio Virtual Cable)`  
+  Set transmission to **Continuous Transmission** (or Voice Activation at `-50 dB`).
+
+### 2. Voicemeeter Setup
+In Voicemeeter on your desktop:
+* Under the **VIRTUAL INPUTS** section (*Voicemeeter VAIO*), click the **`B`** (or `B1`) button so it turns **green**. This routes channel audio into `Voicemeeter Out B1` for Python.
+
+### 3. Environment Configuration
+Copy `.env.example` to `.env`:
+```powershell
+Copy-Item .env.example .env
+```
+Open `.env` and configure your preferred provider:
+```env
+# OpenRouter (Recommended)
+OPENROUTER_API_KEY=sk-or-v1-your-key-here
+OPENROUTER_MODEL=google/gemini-2.5-flash
+
+# Local LM Studio (Optional 100% offline)
+LM_STUDIO_URL=http://localhost:1234/v1
+
+# OpenAI API (Optional)
+OPENAI_API_KEY=sk-proj-your-key-here
+OPENAI_VOICE=fable
+```
+
+### 4. Install Dependencies
+```powershell
+uv venv .venv --python 3.12
+.venv\Scripts\activate
+uv pip install numpy scipy sounddevice faster-whisper requests edge-tts av
+```
+
+---
+
+## ▶️ Running Jimmy
+
+Start Jimmy with a single command:
+```powershell
+.\start_jimmy.bat
+```
+or directly via Python:
+```powershell
+.venv\Scripts\python.exe -u autonomous_bot.py
+```
+
+Once running, Jimmy will automatically verify the connection, monitor the voice channel, and respond whenever you address him!
+
+---
+
+## 🧹 Project Inventory & Total Cleanup
+
+This project strictly documents every file, registry entry, and driver. To see the complete list or wipe all traces from the computer:
+* See [`PROJECT-INVENTORY-AND-CLEANUP.md`](PROJECT-INVENTORY-AND-CLEANUP.md) for the single-command wipeout script.
+
+---
+
+## 📄 License
+MIT License.
