@@ -1,0 +1,6 @@
+name: skynet-notifications
+version: 1.1.0
+description: Queue confirmed memory and skill write notices for Skynet TeamSpeak chat; enforce official Danish-weather sources.
+provides_hooks:
+  - pre_tool_call
+  - post_tool_call

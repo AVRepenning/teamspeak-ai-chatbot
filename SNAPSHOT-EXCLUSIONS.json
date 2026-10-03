@@ -1,0 +1,27 @@
+[
+  {
+    "source": "/home/dammeserver/skynet-ts6",
+    "path": ".env",
+    "reason": "environment-file"
+  },
+  {
+    "source": "/home/dammeserver/skynet-ts6",
+    "path": "compose.probe.yml",
+    "reason": "literal-sensitive-assignment"
+  },
+  {
+    "source": "/home/dammeserver/skynet-ts6",
+    "path": "compose.yml",
+    "reason": "literal-sensitive-assignment"
+  },
+  {
+    "source": "/home/dammeserver/skynet-ts6",
+    "path": "compose.yml",
+    "reason": "literal-sensitive-assignment"
+  },
+  {
+    "source": "/home/dammeserver/skynet-ts6",
+    "path": "compose.probe.yml",
+    "reason": "literal-sensitive-assignment"
+  }
+]

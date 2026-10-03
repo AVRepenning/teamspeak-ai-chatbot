@@ -1,0 +1,11 @@
+{
+  "snapshot_created_utc": "20261002T185801Z",
+  "target_repository": "AVRepenning/teamspeak-ai-chatbot",
+  "target_branch": "backup/sanitized-current-state-20261002T185801Z",
+  "existing_repository": true,
+  "history_policy": "new sanitized snapshot commit; original history intentionally not copied",
+  "sources": [],
+  "notes": [
+    "Current deployed skynet-ts6 source; runtime state, .env and secrets omitted."
+  ]
+}

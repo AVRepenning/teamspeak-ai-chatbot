@@ -1,0 +1,9 @@
+# PREVIEW ONLY: primary phase 1, no query enabled. Portainer source is authoritative.
+services:
+  teamspeak6:
+    ports: !override
+      - "9987:9987/udp"
+      - "30033:30033/tcp"
+    environment:
+      TSSERVER_QUERY_SSH_ENABLED: "0"
+      TSSERVER_QUERY_HTTP_ENABLED: "0"

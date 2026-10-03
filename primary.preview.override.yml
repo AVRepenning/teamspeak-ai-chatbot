@@ -1,0 +1,24 @@
+# Preview only. Do not deploy without the approved primary maintenance window.
+# Synchronize the Portainer stack source before any production up; this overlay
+# is only for validating the intended effective primary configuration.
+services:
+  teamspeak6:
+    ports: !override
+      - "9987:9987/udp"
+      - "30033:30033/tcp"
+    environment:
+      TSSERVER_QUERY_SSH_ENABLED: "1"
+      TSSERVER_QUERY_SSH_IP: "10.254.251.2"
+      TSSERVER_QUERY_HTTP_ENABLED: "0"
+    networks:
+      default: {}
+      query:
+        ipv4_address: 10.254.251.2
+
+networks:
+  query:
+    name: skynet_ts6_query
+    internal: true
+    ipam:
+      config:
+        - subnet: 10.254.251.0/29
